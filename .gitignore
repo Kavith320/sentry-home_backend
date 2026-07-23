@@ -1,0 +1,18 @@
+# Node dependencies
+node_modules/
+dashboard/node_modules/
+
+# Next.js build output
+dashboard/.next/
+dashboard/out/
+
+# Environment files (local credentials & parameters)
+.env
+.env.local
+.env.production
+dashboard/.env.local
+
+# System & Log files
+.DS_Store
+*.log
+npm-debug.log*

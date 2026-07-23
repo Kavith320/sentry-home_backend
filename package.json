@@ -1,0 +1,35 @@
+{
+  "name": "sentry-home",
+  "version": "1.0.0",
+  "description": "Smart Home Security Backend using Node.js, Express, MongoDB and MQTT",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "dashboard:dev": "cd dashboard && npm run dev",
+    "dashboard:build": "cd dashboard && npm run build",
+    "test": "node src/scripts/testBackend.js",
+    "mock-publish": "node src/scripts/mockMqttPublisher.js"
+  },
+  "keywords": [
+    "iot",
+    "esp32",
+    "esp-now",
+    "mqtt",
+    "express",
+    "mongodb",
+    "mongoose"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^4.22.1",
+    "mongoose": "^8.12.0",
+    "mqtt": "^5.10.1"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^10.1.4"
+  }
+}
