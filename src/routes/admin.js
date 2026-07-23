@@ -458,7 +458,7 @@ router.delete('/system/purge-all', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-// GET /api/admin/settings -> Fetch active environment parameters (excluding ports)
+// GET /api/admin/settings -> Fetch active environment parameters (including ports)
 router.get('/settings', (req, res) => {
   res.json({
     success: true,
@@ -471,18 +471,19 @@ router.get('/settings', (req, res) => {
   });
 });
 
-// PUT /api/admin/settings -> Update environment parameters on disk & runtime (excluding ports)
+// PUT /api/admin/settings -> Update environment parameters on disk & runtime (including ports)
 router.put('/settings', (req, res) => {
   try {
-    const { mongodbUri, mqttBrokerUrl, mqttTelemetryTopic } = req.body;
+    const { mongodbUri, mqttBrokerUrl, mqttTelemetryTopic, port } = req.body;
 
     if (mongodbUri) process.env.MONGODB_URI = mongodbUri;
     if (mqttBrokerUrl) process.env.MQTT_BROKER_URL = mqttBrokerUrl;
     if (mqttTelemetryTopic) process.env.MQTT_TELEMETRY_TOPIC = mqttTelemetryTopic;
+    if (port) process.env.PORT = port;
 
-    // Safely update root .env file on disk while keeping PORT intact
-    const currentPort = process.env.PORT || '3000';
-    const newEnvContent = `PORT=${currentPort}
+    // Update root .env file on disk with custom PORT and variables
+    const targetPort = process.env.PORT || '3000';
+    const newEnvContent = `PORT=${targetPort}
 MONGODB_URI=${process.env.MONGODB_URI}
 MQTT_BROKER_URL=${process.env.MQTT_BROKER_URL}
 MQTT_TELEMETRY_TOPIC=${process.env.MQTT_TELEMETRY_TOPIC}
@@ -490,16 +491,16 @@ MQTT_TELEMETRY_TOPIC=${process.env.MQTT_TELEMETRY_TOPIC}
 
     fs.writeFileSync(envPath, newEnvContent, 'utf8');
 
-    console.log(`⚙️  [Settings Updated] MongoDB: ${process.env.MONGODB_URI} | MQTT Broker: ${process.env.MQTT_BROKER_URL} | Topic: ${process.env.MQTT_TELEMETRY_TOPIC}`);
+    console.log(`⚙️  [Settings Updated] Port: ${targetPort} | MongoDB: ${process.env.MONGODB_URI} | MQTT Broker: ${process.env.MQTT_BROKER_URL} | Topic: ${process.env.MQTT_TELEMETRY_TOPIC}`);
 
     res.json({
       success: true,
-      message: 'Environment parameters updated successfully on disk & in runtime memory.',
+      message: 'Environment parameters (including ports) updated successfully on disk & in runtime memory.',
       data: {
         mongodbUri: process.env.MONGODB_URI,
         mqttBrokerUrl: process.env.MQTT_BROKER_URL,
         mqttTelemetryTopic: process.env.MQTT_TELEMETRY_TOPIC,
-        port: currentPort
+        port: targetPort
       }
     });
   } catch (error) {

@@ -49,18 +49,19 @@ export default function SettingsPage() {
     setSaveMsg('');
 
     try {
-      // 1. Update backend .env and runtime
+      // 1. Update backend .env and runtime (including custom port)
       await updateSystemSettings({
         mongodbUri,
         mqttBrokerUrl,
-        mqttTelemetryTopic
+        mqttTelemetryTopic,
+        port
       });
 
       // 2. Save local UI preferences
       setSoundEnabled(soundOn);
       localStorage.setItem('sentry_polling_interval', String(pollingInterval));
 
-      setSaveMsg('System environment parameters updated successfully!');
+      setSaveMsg('System environment parameters & ports updated successfully!');
       setTimeout(() => setSaveMsg(''), 3000);
     } catch (err: any) {
       setSaveMsg(err.message || 'Failed to save settings');
@@ -120,8 +121,8 @@ export default function SettingsPage() {
                   <p className="text-[11px] text-slate-500 mt-1">Database instance URI for Gateways, Sensors, and TelemetryLogs.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2">
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                       MQTT Broker URL (<code className="text-cyan-400">MQTT_BROKER_URL</code>)
                     </label>
@@ -136,28 +137,41 @@ export default function SettingsPage() {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                      Telemetry Ingestion Topic (<code className="text-cyan-400">MQTT_TELEMETRY_TOPIC</code>)
+                      Backend Server Port (<code className="text-amber-400">PORT</code>)
                     </label>
                     <input
                       type="text"
-                      value={mqttTelemetryTopic}
-                      onChange={(e) => setMqttTelemetryTopic(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
+                      value={port}
+                      onChange={(e) => setPort(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-amber-300 focus:outline-none focus:border-amber-500 font-mono font-bold"
                       required
                     />
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Telemetry Ingestion Topic (<code className="text-cyan-400">MQTT_TELEMETRY_TOPIC</code>)
+                  </label>
+                  <input
+                    type="text"
+                    value={mqttTelemetryTopic}
+                    onChange={(e) => setMqttTelemetryTopic(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
+                    required
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Read-Only Port Protection Notice */}
+            {/* Port Customization & Environment Instructions */}
             <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-2">
               <div className="flex items-center space-x-2 text-slate-300 font-bold text-xs">
-                <Lock className="w-4 h-4 text-amber-400" />
-                <span>Protected Port Parameter (<code className="text-amber-400">PORT={port}</code>)</span>
+                <Sliders className="w-4 h-4 text-cyan-400" />
+                <span>Port Customization & Environment Freedom</span>
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-                Network HTTP server port is fixed to <code className="text-slate-200 font-mono">{port}</code> to prevent process disconnection. All other database and broker variables above can be updated dynamically.
+                You have full freedom to customize ports. Changing <code className="text-amber-300 font-mono">PORT</code> updates the backend HTTP server port in your root <code className="text-slate-200 font-mono">.env</code> file. To change the Next.js Frontend port, edit <code className="text-slate-200 font-mono">NEXT_PUBLIC_API_BASE_URL</code> in <code className="text-slate-200 font-mono">dashboard/.env.local</code> or run <code className="text-slate-200 font-mono">next dev -p YOUR_PORT</code>.
               </p>
             </div>
 
