@@ -1,17 +1,13 @@
 export function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL.trim();
+  }
   if (typeof window !== 'undefined') {
-    const customUrl = localStorage.getItem('sentry_api_base_url');
-    if (customUrl) return customUrl.trim();
-
-    if (process.env.NEXT_PUBLIC_API_BASE_URL) {
-      return process.env.NEXT_PUBLIC_API_BASE_URL.trim();
-    }
-
     const protocol = window.location.protocol || 'http:';
     const hostname = window.location.hostname || 'localhost';
     return `${protocol}//${hostname}:3000/api/admin`;
   }
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/admin';
+  return 'http://localhost:3000/api/admin';
 }
 
 export interface DashboardSummary {
