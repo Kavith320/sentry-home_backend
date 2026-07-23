@@ -2,18 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
-import { fetchSystemSettings, updateSystemSettings, SystemSettings } from '@/lib/api';
+import { fetchSystemSettings, updateSystemSettings } from '@/lib/api';
 import { isSoundEnabled, setSoundEnabled } from '@/lib/sound';
-import { Settings, Database, Radio, Save, CheckCircle2, Lock, Volume2, VolumeX, RefreshCw, Sliders } from 'lucide-react';
+import { Database, Radio, Save, CheckCircle2, Volume2, VolumeX, RefreshCw, Sliders } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function SettingsPage() {
   const [mongodbUri, setMongodbUri] = useState('mongodb://127.0.0.1:27017/sentry-home');
   const [mqttBrokerUrl, setMqttBrokerUrl] = useState('mqtt://broker.hivemq.com:1883');
   const [mqttTelemetryTopic, setMqttTelemetryTopic] = useState('sentry-home/telemetry');
-  const [port, setPort] = useState('3000');
-
-  const [apiBaseUrl, setApiBaseUrl] = useState('http://localhost:3000/api/admin');
 
   // UI preferences
   const [pollingInterval, setPollingInterval] = useState(3000);
@@ -25,14 +22,10 @@ export default function SettingsPage() {
 
   const loadSettings = async () => {
     try {
-      const activeApiUrl = localStorage.getItem('sentry_api_base_url') || process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3000/api/admin` : 'http://localhost:3000/api/admin');
-      setApiBaseUrl(activeApiUrl);
-
       const data = await fetchSystemSettings();
-      setMongodbUri(data.mongodbUri);
-      setMqttBrokerUrl(data.mqttBrokerUrl);
-      setMqttTelemetryTopic(data.mqttTelemetryTopic);
-      setPort(data.port);
+      setMongodbUri(data.mongodbUri || '');
+      setMqttBrokerUrl(data.mqttBrokerUrl || '');
+      setMqttTelemetryTopic(data.mqttTelemetryTopic || '');
 
       setSoundOn(isSoundEnabled());
       const savedPoll = localStorage.getItem('sentry_polling_interval');
@@ -54,22 +47,18 @@ export default function SettingsPage() {
     setSaveMsg('');
 
     try {
-      // Save local API base URL override
-      localStorage.setItem('sentry_api_base_url', apiBaseUrl.trim());
-
-      // Update backend .env and runtime (including custom port)
+      // Update backend environment settings
       await updateSystemSettings({
         mongodbUri,
         mqttBrokerUrl,
-        mqttTelemetryTopic,
-        port
+        mqttTelemetryTopic
       });
 
-      // 2. Save local UI preferences
+      // Save local UI preferences
       setSoundEnabled(soundOn);
       localStorage.setItem('sentry_polling_interval', String(pollingInterval));
 
-      setSaveMsg('System environment parameters & ports updated successfully!');
+      setSaveMsg('System environment parameters updated successfully!');
       setTimeout(() => setSaveMsg(''), 3000);
     } catch (err: any) {
       setSaveMsg(err.message || 'Failed to save settings');
@@ -92,7 +81,7 @@ export default function SettingsPage() {
               <div>
                 <h3 className="font-bold text-slate-100 text-lg">System Parameter Control</h3>
                 <p className="text-xs text-slate-400">
-                  View and update runtime environment configurations (excluding network ports)
+                  View and update runtime environment configurations
                 </p>
               </div>
             </div>
@@ -169,6 +158,13 @@ export default function SettingsPage() {
                 All server ports, MongoDB credentials, and API endpoints are managed cleanly from the single central <code className="text-cyan-400 font-mono">.env</code> file in your project root.
               </p>
             </div>
+
+            {/* Frontend Preferences Section */}
+            <div className="space-y-4 pt-2 border-t border-slate-800/80">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center space-x-2">
+                <Radio className="w-4 h-4" />
+                <span>Dashboard Frontend User Preferences</span>
+              </h4>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
