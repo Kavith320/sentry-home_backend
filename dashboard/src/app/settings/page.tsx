@@ -13,6 +13,8 @@ export default function SettingsPage() {
   const [mqttTelemetryTopic, setMqttTelemetryTopic] = useState('sentry-home/telemetry');
   const [port, setPort] = useState('3000');
 
+  const [apiBaseUrl, setApiBaseUrl] = useState('http://localhost:3000/api/admin');
+
   // UI preferences
   const [pollingInterval, setPollingInterval] = useState(3000);
   const [soundOn, setSoundOn] = useState(true);
@@ -23,6 +25,9 @@ export default function SettingsPage() {
 
   const loadSettings = async () => {
     try {
+      const activeApiUrl = localStorage.getItem('sentry_api_base_url') || process.env.NEXT_PUBLIC_API_BASE_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:3000/api/admin` : 'http://localhost:3000/api/admin');
+      setApiBaseUrl(activeApiUrl);
+
       const data = await fetchSystemSettings();
       setMongodbUri(data.mongodbUri);
       setMqttBrokerUrl(data.mqttBrokerUrl);
@@ -49,7 +54,10 @@ export default function SettingsPage() {
     setSaveMsg('');
 
     try {
-      // 1. Update backend .env and runtime (including custom port)
+      // Save local API base URL override
+      localStorage.setItem('sentry_api_base_url', apiBaseUrl.trim());
+
+      // Update backend .env and runtime (including custom port)
       await updateSystemSettings({
         mongodbUri,
         mqttBrokerUrl,
@@ -181,6 +189,20 @@ export default function SettingsPage() {
                 <Radio className="w-4 h-4" />
                 <span>Dashboard Frontend User Preferences</span>
               </h4>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Frontend Target Backend API Base URL (<code className="text-cyan-400">NEXT_PUBLIC_API_BASE_URL</code>)
+                </label>
+                <input
+                  type="text"
+                  value={apiBaseUrl}
+                  onChange={(e) => setApiBaseUrl(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-cyan-300 focus:outline-none focus:border-cyan-500 font-mono"
+                  required
+                />
+                <p className="text-[11px] text-slate-500 mt-1">Specifies the backend server address (e.g. <code>http://localhost:3000/api/admin</code> or <code>http://YOUR_SERVER_IP:3000/api/admin</code>).</p>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

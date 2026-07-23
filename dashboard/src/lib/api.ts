@@ -1,4 +1,18 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/admin';
+export function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    const customUrl = localStorage.getItem('sentry_api_base_url');
+    if (customUrl) return customUrl.trim();
+
+    if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+      return process.env.NEXT_PUBLIC_API_BASE_URL.trim();
+    }
+
+    const protocol = window.location.protocol || 'http:';
+    const hostname = window.location.hostname || 'localhost';
+    return `${protocol}//${hostname}:3000/api/admin`;
+  }
+  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/admin';
+}
 
 export interface DashboardSummary {
   gateways: {
@@ -54,7 +68,7 @@ export interface TelemetryLogItem {
 }
 
 export async function fetchDashboardSummary(): Promise<DashboardSummary> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/summary`, { cache: 'no-store' });
+  const res = await fetch(`${getApiBaseUrl()}/dashboard/summary`, { cache: 'no-store' });
   const data = await res.json();
   if (!data.success) throw new Error(data.error || 'Failed to fetch summary');
   return data.data;
@@ -62,7 +76,7 @@ export async function fetchDashboardSummary(): Promise<DashboardSummary> {
 
 export async function fetchGatewayByChipId(chipId: string): Promise<GatewayDevice | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/gateways/${encodeURIComponent(chipId)}`, { cache: 'no-store' });
+    const res = await fetch(`${getApiBaseUrl()}/gateways/${encodeURIComponent(chipId)}`, { cache: 'no-store' });
     const data = await res.json();
     return data.success ? data.data : null;
   } catch {
@@ -72,7 +86,7 @@ export async function fetchGatewayByChipId(chipId: string): Promise<GatewayDevic
 
 export async function fetchSensorByChipId(chipId: string): Promise<SensorDevice | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/sensors/${encodeURIComponent(chipId)}`, { cache: 'no-store' });
+    const res = await fetch(`${getApiBaseUrl()}/sensors/${encodeURIComponent(chipId)}`, { cache: 'no-store' });
     const data = await res.json();
     return data.success ? data.data : null;
   } catch {
@@ -81,7 +95,7 @@ export async function fetchSensorByChipId(chipId: string): Promise<SensorDevice 
 }
 
 export async function fetchGateways(): Promise<GatewayDevice[]> {
-  const res = await fetch(`${API_BASE_URL}/gateways`, { cache: 'no-store' });
+  const res = await fetch(`${getApiBaseUrl()}/gateways`, { cache: 'no-store' });
   const data = await res.json();
   if (!data.success) throw new Error(data.error || 'Failed to fetch gateways');
   return data.data;
@@ -89,8 +103,8 @@ export async function fetchGateways(): Promise<GatewayDevice[]> {
 
 export async function fetchSensors(gatewayChipId?: string): Promise<SensorDevice[]> {
   const url = gatewayChipId
-    ? `${API_BASE_URL}/sensors?gatewayChipId=${encodeURIComponent(gatewayChipId)}`
-    : `${API_BASE_URL}/sensors`;
+    ? `${getApiBaseUrl()}/sensors?gatewayChipId=${encodeURIComponent(gatewayChipId)}`
+    : `${getApiBaseUrl()}/sensors`;
   const res = await fetch(url, { cache: 'no-store' });
   const data = await res.json();
   if (!data.success) throw new Error(data.error || 'Failed to fetch sensors');
@@ -98,28 +112,28 @@ export async function fetchSensors(gatewayChipId?: string): Promise<SensorDevice
 }
 
 export async function fetchLowBatteryAlerts(threshold = 3.3): Promise<SensorDevice[]> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/alerts/low-battery?threshold=${threshold}`, { cache: 'no-store' });
+  const res = await fetch(`${getApiBaseUrl()}/dashboard/alerts/low-battery?threshold=${threshold}`, { cache: 'no-store' });
   const data = await res.json();
   if (!data.success) throw new Error(data.error || 'Failed to fetch low battery alerts');
   return data.data;
 }
 
 export async function fetchStaleDevices(minutes = 30): Promise<{ gateways: GatewayDevice[]; sensors: SensorDevice[] }> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/alerts/stale-devices?minutes=${minutes}`, { cache: 'no-store' });
+  const res = await fetch(`${getApiBaseUrl()}/dashboard/alerts/stale-devices?minutes=${minutes}`, { cache: 'no-store' });
   const data = await res.json();
   if (!data.success) throw new Error(data.error || 'Failed to fetch stale devices');
   return data.data;
 }
 
 export async function fetchHomeTopology(homeId: string): Promise<{ gateways: GatewayDevice[]; sensors: SensorDevice[] }> {
-  const res = await fetch(`${API_BASE_URL}/dashboard/homes/${encodeURIComponent(homeId)}`, { cache: 'no-store' });
+  const res = await fetch(`${getApiBaseUrl()}/dashboard/homes/${encodeURIComponent(homeId)}`, { cache: 'no-store' });
   const data = await res.json();
   if (!data.success) throw new Error(data.error || 'Failed to fetch topology');
   return data.data;
 }
 
 export async function fetchTelemetryHistory(page = 1, limit = 20, sensorChipId?: string, gatewayChipId?: string) {
-  let url = `${API_BASE_URL}/dashboard/telemetry/history?page=${page}&limit=${limit}`;
+  let url = `${getApiBaseUrl()}/dashboard/telemetry/history?page=${page}&limit=${limit}`;
   if (sensorChipId) url += `&sensorChipId=${encodeURIComponent(sensorChipId)}`;
   if (gatewayChipId) url += `&gatewayChipId=${encodeURIComponent(gatewayChipId)}`;
 
@@ -130,7 +144,7 @@ export async function fetchTelemetryHistory(page = 1, limit = 20, sensorChipId?:
 }
 
 export async function updateGatewayStatus(chipId: string, connectionStatus: 'online' | 'offline', homeId?: string) {
-  const res = await fetch(`${API_BASE_URL}/gateways/${encodeURIComponent(chipId)}`, {
+  const res = await fetch(`${getApiBaseUrl()}/gateways/${encodeURIComponent(chipId)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ connectionStatus, homeId })
@@ -139,7 +153,7 @@ export async function updateGatewayStatus(chipId: string, connectionStatus: 'onl
 }
 
 export async function updateSensorState(chipId: string, sensorState: string, battery?: number, rssi?: number) {
-  const res = await fetch(`${API_BASE_URL}/sensors/${encodeURIComponent(chipId)}`, {
+  const res = await fetch(`${getApiBaseUrl()}/sensors/${encodeURIComponent(chipId)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ sensorState, battery, rssi })
@@ -148,7 +162,7 @@ export async function updateSensorState(chipId: string, sensorState: string, bat
 }
 
 export async function simulateTelemetry(payload: { gatewayChipId: string; sensorChipId: string; sensorState: string; battery?: number; rssi?: number }) {
-  const res = await fetch(`${API_BASE_URL}/telemetry/simulate`, {
+  const res = await fetch(`${getApiBaseUrl()}/telemetry/simulate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -157,7 +171,7 @@ export async function simulateTelemetry(payload: { gatewayChipId: string; sensor
 }
 
 export async function deleteDeviceByChipId(chipId: string) {
-  const res = await fetch(`${API_BASE_URL}/devices/${encodeURIComponent(chipId)}`, {
+  const res = await fetch(`${getApiBaseUrl()}/devices/${encodeURIComponent(chipId)}`, {
     method: 'DELETE'
   });
   const data = await res.json();
@@ -166,7 +180,7 @@ export async function deleteDeviceByChipId(chipId: string) {
 }
 
 export async function purgeAllSystemData() {
-  const res = await fetch(`${API_BASE_URL}/system/purge-all`, {
+  const res = await fetch(`${getApiBaseUrl()}/system/purge-all`, {
     method: 'DELETE'
   });
   const data = await res.json();
@@ -182,14 +196,14 @@ export interface SystemSettings {
 }
 
 export async function fetchSystemSettings(): Promise<SystemSettings> {
-  const res = await fetch(`${API_BASE_URL}/settings`, { cache: 'no-store' });
+  const res = await fetch(`${getApiBaseUrl()}/settings`, { cache: 'no-store' });
   const data = await res.json();
   if (!data.success) throw new Error(data.error || 'Failed to fetch settings');
   return data.data;
 }
 
 export async function updateSystemSettings(settings: Partial<SystemSettings>) {
-  const res = await fetch(`${API_BASE_URL}/settings`, {
+  const res = await fetch(`${getApiBaseUrl()}/settings`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(settings)
